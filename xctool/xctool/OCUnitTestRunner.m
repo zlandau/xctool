@@ -113,17 +113,18 @@
   __block BOOL didReceiveTestEvents = NO;
 
   void (^feedOutputToBlock)(NSString *) = ^(NSString *line) {
-    NSError *parseError = nil;
-    NSDictionary *event = [NSJSONSerialization JSONObjectWithData:[line dataUsingEncoding:NSUTF8StringEncoding]
-                                                          options:0
-                                                            error:&parseError];
-    if (parseError) {
-      [NSException raise:NSGenericException format:@"Failed to parse test output: %@", [parseError localizedFailureReason]];
-    }
-
-    [_reporters makeObjectsPerformSelector:@selector(handleEvent:) withObject:event];
-    [crashFilter handleEvent:event];
-    didReceiveTestEvents = YES;
+    NSLog(@"LINE> %@", line);
+//    NSError *parseError = nil;
+//    NSDictionary *event = [NSJSONSerialization JSONObjectWithData:[line dataUsingEncoding:NSUTF8StringEncoding]
+//                                                          options:0
+//                                                            error:&parseError];
+//    if (parseError) {
+//      [NSException raise:NSGenericException format:@"Failed to parse test output: %@", [parseError localizedFailureReason]];
+//    }
+//
+//    [_reporters makeObjectsPerformSelector:@selector(handleEvent:) withObject:event];
+//    [crashFilter handleEvent:event];
+//    didReceiveTestEvents = YES;
   };
 
   NSSet *crashReportsAtStart = [NSSet setWithArray:[self collectCrashReportPaths]];

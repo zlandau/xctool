@@ -27,41 +27,29 @@
 
 - (void)testPrintSDK
 {
-  NSLog(@"SDK: %@", [UIDevice currentDevice].systemVersion);
+  printf("%s: SDK: %s\n", __PRETTY_FUNCTION__, [[UIDevice currentDevice].systemVersion UTF8String]);
 }
 
 - (void)testWillPass
 {
+  printf("In %s\n", __PRETTY_FUNCTION__);
   STAssertTrue(YES, nil);
 }
 
 - (void)testWillFail
 {
+  printf("In %s\n", __PRETTY_FUNCTION__);
   STAssertEqualObjects(@"a", @"b", @"Strings aren't equal");
 }
 
 - (void)testOutputMerging {
-  fprintf(stdout, "stdout-line1\n");
-  fprintf(stderr, "stderr-line1\n");
-  fprintf(stdout, "stdout-line2\n");
-  fprintf(stdout, "stdout-line3\n");
-  fprintf(stderr, "stderr-line2\n");
-  fprintf(stderr, "stderr-line3\n");
+  fprintf(stdout, "%s: stdout-line1\n", __PRETTY_FUNCTION__);
+  fprintf(stderr, "%s: stderr-line1\n", __PRETTY_FUNCTION__);
+  fprintf(stdout, "%s: stdout-line2\n", __PRETTY_FUNCTION__);
+  fprintf(stdout, "%s: stdout-line3\n", __PRETTY_FUNCTION__);
+  fprintf(stderr, "%s: stderr-line2\n", __PRETTY_FUNCTION__);
+  fprintf(stderr, "%s: stderr-line3\n", __PRETTY_FUNCTION__);
   STAssertTrue(YES, nil);
-}
-
-- (void)testStream {
-  for (int i = 0; i < 3; i++) {
-    NSLog(@">>>> i = %d", i);
-    [NSThread sleepForTimeInterval:0.25];
-  }
-}
-
-- (void)testBacktraceOutputIsCaptured
-{
-  void *exceptionSymbols[256];
-  int numSymbols = backtrace(exceptionSymbols, 256);
-  backtrace_symbols_fd(exceptionSymbols, numSymbols, STDERR_FILENO);
 }
 
 @end

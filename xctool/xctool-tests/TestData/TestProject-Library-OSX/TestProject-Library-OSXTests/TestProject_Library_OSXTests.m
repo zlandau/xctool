@@ -29,11 +29,17 @@
 
 
 - (void)testWillPass {
+  sleep(0.1);
+  printf("\nWill Pass!!!!!!!!!!\n");
   STAssertEquals(1, 1, @"Equal!");
+  sleep(0.1);
 }
 
 - (void)testWillFail {
+  sleep(0.1);
+  printf("\nWill fail!!!!!!!!!!\n");
   STAssertEquals(1, 2, @"Not Equal!");
+  sleep(0.1);
 }
 
 - (void)testOutput {

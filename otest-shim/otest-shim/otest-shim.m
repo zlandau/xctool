@@ -20,6 +20,16 @@
 #import <objc/runtime.h>
 #import <sys/uio.h>
 
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+
 #import <Foundation/Foundation.h>
 #import <SenTestingKit/SenTestingKit.h>
 
@@ -28,10 +38,13 @@
 #import "dyld-interposing.h"
 #import "dyld_priv.h"
 
-static int __stdoutHandle;
-static FILE *__stdout;
-static int __stderrHandle;
-static FILE *__stderr;
+#define READ_SIDE 0
+#define WRITE_SIDE 1
+
+static int __eventPipeFds[2] = {0};
+static FILE *__eventPipeWriteSide = NULL;
+
+#define ARRAYSIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 static BOOL __testIsRunning = NO;
 static NSException *__testException = nil;
@@ -56,16 +69,26 @@ static void PrintJSON(id JSONObject)
   NSData *data = [NSJSONSerialization dataWithJSONObject:JSONObject options:0 error:&error];
 
   if (error) {
-    fprintf(__stderr,
+    fprintf(stderr,
             "ERROR: Error generating JSON for object: %s: %s\n",
             [[JSONObject description] UTF8String],
             [[error localizedFailureReason] UTF8String]);
     exit(1);
   }
 
-  fwrite([data bytes], 1, [data length], __stdout);
-  fputs("\n", __stdout);
-  fflush(__stdout);
+//  NSString *str = [[[NSString alloc] initWithData:data
+//                                         encoding:NSUTF8StringEncoding] autorelease];
+//  NSLog(@"write %@ >>>", str);
+
+  // Send length of data, then data.
+  uint32_t dataLen = (uint32_t)[data length];
+//  fwrite(&dataLen, 4, 1, __eventPipeWriteSide);
+  fwrite([data bytes], dataLen, 1, __eventPipeWriteSide);
+  fprintf(__eventPipeWriteSide, "\n");
+  fflush(__eventPipeWriteSide);
+
+//  write(__eventPipeFds[WRITE_SIDE], &dataLen, 4);
+//  write(__eventPipeFds[WRITE_SIDE], [data bytes], dataLen);
 }
 
 static void SenTestLog_testSuiteDidStart(id self, SEL sel, NSNotification *notification)
@@ -166,107 +189,6 @@ static void __abort()
 }
 DYLD_INTERPOSE(__abort, abort);
 
-// From /usr/lib/system/libsystem_kernel.dylib - output from printf/fprintf/fwrite will flow to
-// __write_nonancel just before it does the system call.
-ssize_t __write_nocancel(int fildes, const void *buf, size_t nbyte);
-static ssize_t ___write_nocancel(int fildes, const void *buf, size_t nbyte)
-{
-  if (fildes == STDOUT_FILENO || fildes == STDERR_FILENO) {
-    if (__testIsRunning && nbyte > 0) {
-      NSString *output = [[NSString alloc] initWithBytes:buf length:nbyte encoding:NSUTF8StringEncoding];
-      PrintJSON(@{@"event": kReporter_Events_TestOuput, kReporter_TestOutput_OutputKey: output});
-      [__testOutput appendString:output];
-      [output release];
-    }
-    return nbyte;
-  } else {
-    return write(fildes, buf, nbyte);
-  }
-}
-DYLD_INTERPOSE(___write_nocancel, __write_nocancel);
-
-static ssize_t __write(int fildes, const void *buf, size_t nbyte);
-static ssize_t __write(int fildes, const void *buf, size_t nbyte)
-{
-  if (fildes == STDOUT_FILENO || fildes == STDERR_FILENO) {
-    if (__testIsRunning && nbyte > 0) {
-      NSString *output = [[NSString alloc] initWithBytes:buf length:nbyte encoding:NSUTF8StringEncoding];
-      PrintJSON(@{@"event": kReporter_Events_TestOuput, kReporter_TestOutput_OutputKey: output});
-      [__testOutput appendString:output];
-      [output release];
-    }
-    return nbyte;
-  } else {
-    return write(fildes, buf, nbyte);
-  }
-}
-DYLD_INTERPOSE(__write, write);
-
-static NSString *CreateStringFromIOV(const struct iovec *iov, int iovcnt) {
-  NSMutableData *buffer = [[NSMutableData alloc] initWithCapacity:0];
-
-  for (int i = 0; i < iovcnt; i++) {
-    [buffer appendBytes:iov[i].iov_base length:iov[i].iov_len];
-  }
-
-  NSMutableData *bufferWithoutNulls = [[NSMutableData alloc] initWithLength:buffer.length];
-
-  NSUInteger offset = 0;
-  uint8_t *bufferBytes = (uint8_t *)[buffer mutableBytes];
-  uint8_t *bufferWithoutNullsBytes = (uint8_t *)[bufferWithoutNulls mutableBytes];
-
-  for (NSUInteger i = 0; i < buffer.length; i++) {
-    uint8_t byte = bufferBytes[i];
-    if (byte != 0) {
-      bufferWithoutNullsBytes[offset++] = byte;
-    }
-  }
-
-  [bufferWithoutNulls setLength:offset];
-
-  NSString *str = [[NSString alloc] initWithData:bufferWithoutNulls encoding:NSUTF8StringEncoding];
-
-  [buffer release];
-  [bufferWithoutNulls release];
-
-  return str;
-}
-
-// From /usr/lib/system/libsystem_kernel.dylib - output from writev$NOCANCEL$UNIX2003 will flow
-// here.  'backtrace_symbols_fd' is one function that sends output this direction.
-ssize_t __writev_nocancel(int fildes, const struct iovec *iov, int iovcnt);
-static ssize_t ___writev_nocancel(int fildes, const struct iovec *iov, int iovcnt)
-{
-  if (fildes == STDOUT_FILENO || fildes == STDERR_FILENO) {
-    if (__testIsRunning && iovcnt > 0) {
-      NSString *buffer = CreateStringFromIOV(iov, iovcnt);
-      PrintJSON(@{@"event": kReporter_Events_TestOuput, kReporter_TestOutput_OutputKey: buffer});
-      [__testOutput appendString:buffer];
-      [buffer release];
-    }
-    return iovcnt;
-  } else {
-    return __writev_nocancel(fildes, iov, iovcnt);
-  }
-}
-DYLD_INTERPOSE(___writev_nocancel, __writev_nocancel);
-
-// Output from NSLog flows through writev
-static ssize_t __writev(int fildes, const struct iovec *iov, int iovcnt)
-{
-  if (fildes == STDOUT_FILENO || fildes == STDERR_FILENO) {
-    if (__testIsRunning && iovcnt > 0) {
-      NSString *buffer = CreateStringFromIOV(iov, iovcnt);
-      PrintJSON(@{@"event": kReporter_Events_TestOuput, kReporter_TestOutput_OutputKey: buffer});
-      [__testOutput appendString:buffer];
-      [buffer release];
-    }
-    return iovcnt;
-  } else {
-    return writev(fildes, iov, iovcnt);
-  }
-}
-DYLD_INTERPOSE(__writev, writev);
 
 static const char *DyldImageStateChangeHandler(enum dyld_image_states state,
                                                uint32_t infoCount,
@@ -300,21 +222,201 @@ static const char *DyldImageStateChangeHandler(enum dyld_image_states state,
   return NULL;
 }
 
+static void ReadAndEchoEvent(int fd)
+{
+  NSLog(@"here0");
+  uint32_t eventLength = 0;
+  size_t eventLengthRead = read(fd, &eventLength, 4);
+  NSCAssert(eventLengthRead == 4,
+            @"read() returned %lu: %s",
+            eventLengthRead,
+            (eventLengthRead == -1) ? strerror(errno) : "");
+
+  void *eventData = malloc(eventLength);
+  NSCAssert(eventData != NULL, @"malloc() failed: %s", strerror(errno));
+
+  NSLog(@"here2");
+  size_t eventDataRead = read(fd, eventData, eventLength);
+  NSCAssert(eventDataRead == eventLength,
+            @"read() returned %lu (expected %u): %s",
+            eventDataRead,
+            eventLength,
+            (eventDataRead == -1) ? strerror(errno) : "");
+
+  NSLog(@"here3: %@", [[[NSString alloc] initWithBytes:eventData length:eventLength encoding:NSUTF8StringEncoding] autorelease]);
+
+  write(STDOUT_FILENO, eventData, eventLength);
+  fflush(stdout);
+}
+
+typedef void (*data_available_callback)(int fd, NSData *data, void *context);
+
+static void DataIsAvailable(int fd, NSData *data, void *context)
+{
+  NSMutableString *dataAsString = [[[NSMutableString alloc] initWithData:data
+                                                                encoding:NSUTF8StringEncoding] autorelease];
+  // indent the lines
+  [dataAsString replaceOccurrencesOfString:@"\n"
+                                withString:@"\n    "
+                                   options:0
+                                     range:NSMakeRange(0, [dataAsString length])];
+  [dataAsString insertString:@"    " atIndex:0];
+
+  fprintf(stderr, "-------------------------------------\n");
+  fprintf(stderr,
+          "RECV '%s' DATA (%lu bytes, fd = %d) --\n",
+          (char *)context,
+          (size_t)[data length],
+          fd);
+  fprintf(stderr, "%s\n", [dataAsString UTF8String]);
+  fflush(stderr);
+
+
+//  NSLog(@"\n\n\ %d (%lu bytes) >>>\n%@\n <<<< \n\n\n", fd, (unsigned long)[data length], [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+}
+
+static void ReadFromPipesAndCallbackWithData(int *fds,
+                                             data_available_callback *callbacks,
+                                             void **contexts,
+                                             int count)
+{
+  struct kevent *waitEvents = calloc(count, sizeof(kevent));
+  assert(waitEvents != NULL);
+
+  BOOL *fdIsClosed = calloc(count, sizeof(BOOL));
+  assert(fdIsClosed != NULL);
+
+  // Keep track of how many EOF's we've seen - we return when all are finished.
+  int numFdsClosed = 0;
+
+  struct kevent *triggeredEvents = calloc(count, sizeof(struct kevent));
+  assert(triggeredEvents != NULL);
+
+  for (int i = 0; i < count; i++) {
+    void *udata = (void *)i;
+    EV_SET(&waitEvents[i], fds[i], EVFILT_READ, EV_ADD, 0, 0, udata);
+  }
+
+  int queue = kqueue();
+
+  while (numFdsClosed < count) {
+    memset(triggeredEvents, 0, count * sizeof(struct kevent));
+    int numEvents = kevent(queue, waitEvents, count, triggeredEvents, count, NULL);
+
+    for (int i = 0; i < numEvents; i++) {
+      int fd = (int)triggeredEvents[i].ident;
+      int fdIndex = (int)triggeredEvents[i].udata;
+      size_t bytesAvailable = (size_t)triggeredEvents[i].data;
+
+      void *dataBytes = malloc(bytesAvailable);
+      assert(dataBytes != NULL);
+
+      size_t bytesRead = read(fd, dataBytes, bytesAvailable);
+      assert(bytesRead == bytesAvailable);
+
+      NSData *data = [[[NSData alloc] initWithBytesNoCopy:dataBytes
+                                                   length:bytesRead
+                                             freeWhenDone:YES] autorelease];
+      callbacks[i](fd, data, contexts[fdIndex]);
+
+      if ((triggeredEvents[i].flags & EV_EOF) > 0) {
+        if (!fdIsClosed[fdIndex]) {
+          fdIsClosed[fdIndex] = YES;
+          numFdsClosed++;
+        }
+      }
+    }
+  }
+
+  if (waitEvents != NULL) {
+    free(waitEvents);
+    waitEvents = NULL;
+  }
+  if (triggeredEvents != NULL) {
+    free(triggeredEvents);
+    triggeredEvents = NULL;
+  }
+  if (fdIsClosed != NULL) {
+    free(fdIsClosed);
+    fdIsClosed = NULL;
+  }
+}
+
 __attribute__((constructor)) static void EntryPoint()
 {
-  __stdoutHandle = dup(STDOUT_FILENO);
-  __stdout = fdopen(__stdoutHandle, "w");
-  __stderrHandle = dup(STDERR_FILENO);
-  __stderr = fdopen(__stderrHandle, "w");
-
-  // We need to swizzle SenTestLog (part of SenTestingKit), but the test bundle
-  // which links SenTestingKit hasn't been loaded yet.  Let's register to get
-  // notified when libraries are initialized and we'll watch for SenTestingKit.
-  dyld_register_image_state_change_handler(dyld_image_state_initialized,
-                                           NO,
-                                           DyldImageStateChangeHandler);
-
   // Unset so we don't cascade into any other process that might be spawned.
   unsetenv("DYLD_INSERT_LIBRARIES");
+
+  NSCAssert(pipe(__eventPipeFds) == 0, @"pipe() failed: %s", strerror(errno));
+
+  int stdoutPipes[2];
+  int stderrPipes[2];
+  NSCAssert(pipe(stdoutPipes) == 0, @"pipe() failed: %s", strerror(errno));
+  NSCAssert(pipe(stderrPipes) == 0, @"pipe() failed: %s", strerror(errno));
+
+  pid_t childPid = fork();
+  NSCAssert(childPid != 1, @"fork() failed: %s", strerror(errno));
+
+  if (childPid == 0) {
+    // The fork
+    printf("in fork!\n");
+
+    // We'll only read from this pipe.
+    close(__eventPipeFds[WRITE_SIDE]);
+    close(stdoutPipes[WRITE_SIDE]);
+    close(stderrPipes[WRITE_SIDE]);
+
+    int pipes[] = {
+      __eventPipeFds[READ_SIDE],
+      stdoutPipes[READ_SIDE],
+      stderrPipes[READ_SIDE],
+    };
+    data_available_callback callbacks[] = {
+      DataIsAvailable,
+      DataIsAvailable,
+      DataIsAvailable,
+    };
+    void *contexts[] = {
+      "EVENTS",
+      "STDOUT",
+      "STDERR",
+    };
+
+    ReadFromPipesAndCallbackWithData(pipes, callbacks, contexts, 3);
+
+    // Explicitly exit - otherwise dyld will keep loading all the libs that come
+    // after otest-shim and eventually we'll run the tests again.
+    exit(0);
+  } else {
+    // The original otest or TEST_HOST process.
+    printf("in host!\n");
+
+    // We'll only write to this pipe.
+    close(__eventPipeFds[READ_SIDE]);
+    close(stdoutPipes[READ_SIDE]);
+    close(stderrPipes[READ_SIDE]);
+
+    __eventPipeWriteSide = fdopen(__eventPipeFds[WRITE_SIDE], "w");
+
+    // Redirect all stdout & stderr to the pipes.
+    if (dup2(stdoutPipes[WRITE_SIDE], STDOUT_FILENO) == -1) {
+      fprintf(stderr, "Couldn't dup2(%d, %d): %s\n",
+              stdoutPipes[WRITE_SIDE], STDOUT_FILENO, strerror(errno));
+      exit(1);
+    }
+
+    if (dup2(stderrPipes[WRITE_SIDE], STDERR_FILENO) == -1) {
+      fprintf(stderr, "Couldn't dup2(%d, %d): %s\n",
+              stderrPipes[WRITE_SIDE], STDERR_FILENO, strerror(errno));
+      exit(1);
+    }
+
+    // We need to swizzle SenTestLog (part of SenTestingKit), but the test bundle
+    // which links SenTestingKit hasn't been loaded yet.  Let's register to get
+    // notified when libraries are initialized and we'll watch for SenTestingKit.
+    dyld_register_image_state_change_handler(dyld_image_state_initialized,
+                                             NO,
+                                             DyldImageStateChangeHandler);
+  }
 }
 
