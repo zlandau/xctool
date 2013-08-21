@@ -353,11 +353,6 @@
     self.scheme = targetMatch.schemeName;
   };
 
-  if (self.scheme == nil) {
-    *errorMessage = @"Missing the required -scheme argument.";
-    return NO;
-  }
-
   if (self.workspace != nil && !isDirectory(self.workspace)) {
     *errorMessage = [NSString stringWithFormat:@"Specified workspace doesn't exist: %@", self.workspace];
     return NO;
@@ -390,12 +385,23 @@
     [schemeNames addObject:[[schemePath lastPathComponent] stringByDeletingPathExtension]];
   }
 
-  if (![schemeNames containsObject:self.scheme]) {
-    *errorMessage = [NSString stringWithFormat:
-                     @"Can't find scheme '%@'. Possible schemes include: %@",
-                     self.scheme,
-                     [schemeNames componentsJoinedByString:@", "]];
-    return NO;
+  if (self.scheme) {
+    if (![schemeNames containsObject:self.scheme]) {
+      *errorMessage = [NSString stringWithFormat:
+                       @"Can't find scheme '%@': Possible schemes include: %@",
+                       self.scheme,
+                       [schemeNames componentsJoinedByString:@", "]];
+      return NO;
+    }
+  } else {
+    if ([schemeNames count] == 1) {
+      self.scheme = schemeNames[0];
+    } else {
+      *errorMessage = [NSString stringWithFormat:
+                       @"Specify scheme with -scheme: %@",
+                       [schemeNames componentsJoinedByString:@", "]];
+      return NO;
+    }
   }
 
   if (self.sdk != nil) {
