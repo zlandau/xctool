@@ -15,8 +15,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "Reporter.h"
+#import "OCTestSuiteEventState.h"
 
-@interface OCUnitTestRunner : NSObject {
+@interface OCUnitTestRunner : Reporter {
 @public
   NSDictionary *_buildSettings;
   NSString *_senTestList;
@@ -27,6 +29,8 @@
   BOOL _freshInstall;
   NSString *_simulatorType;
   NSArray *_reporters;
+  OCTestSuiteEventState *_testSuiteState;
+  OCTestEventState *_previousTestState;
 }
 
 /**

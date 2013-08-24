@@ -83,13 +83,8 @@ static void ReadFileDescriptorAndOutputLinesToBlock(int inputFD,
 
   ReadFileDescriptorAndOutputLinesToBlock([inputHandle fileDescriptor], ^(NSString *line){
     @autoreleasepool {
-      NSError *error = nil;
-      NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[line dataUsingEncoding:NSUTF8StringEncoding]
-                                                           options:0
-                                                             error:&error];
-      NSAssert(dict != nil, @"Failed to decode JSON '%@' with error: %@", line, [error localizedFailureReason]);
-      [reporter handleEvent:dict];
-    }
+      [reporter parseAndHandleEvent: line];
+     }
   });
 
   [reporter didFinishReporting];
@@ -105,6 +100,16 @@ static void ReadFileDescriptorAndOutputLinesToBlock(int inputFD,
 - (void)didFinishReporting
 {
   // Subclass should implement.
+}
+
+- (void)parseAndHandleEvent:(NSString *)line
+{
+  NSError *error = nil;
+  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[line dataUsingEncoding:NSUTF8StringEncoding]
+                                                       options:0
+                                                         error:&error];
+  NSAssert(dict != nil, @"Failed to decode JSON '%@' with error: %@", line, [error localizedFailureReason]);
+  [self handleEvent:dict];
 }
 
 - (void)handleEvent:(NSDictionary *)eventDict

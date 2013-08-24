@@ -35,6 +35,7 @@
  */
 - (void)didFinishReporting;
 
+- (void)parseAndHandleEvent:(NSString *)line;
 - (void)handleEvent:(NSDictionary *)event;
 
 - (void)beginAction:(NSDictionary *)event;
