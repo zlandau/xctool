@@ -87,14 +87,13 @@
   [_tests addObject:test];
 }
 
-- (void)addTestsFromString:(NSString *)tests
+- (void)addTestsFromArray:(NSArray *)tests
 {
-  [[tests componentsSeparatedByString:@","]
-   enumerateObjectsUsingBlock:^(NSString *testDesc, NSUInteger idx, BOOL *stop) {
-     OCTestEventState *state = [[OCTestEventState alloc] initWithInputName:testDesc];
-     [self addTest:state];
-     [state release];
-   }];
+  [tests enumerateObjectsUsingBlock:^(NSString *testDesc, NSUInteger idx, BOOL *stop) {
+    OCTestEventState *state = [[OCTestEventState alloc] initWithInputName:testDesc];
+    [self addTest:state];
+    [state release];
+  }];
 }
 
 - (OCTestEventState *)runningTest

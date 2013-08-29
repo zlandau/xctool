@@ -184,7 +184,7 @@
   OCTestSuiteEventState *state =
     [[[OCTestSuiteEventState alloc] initWithName:@"ATestSuite"] autorelease];
 
-  [state addTestsFromString:@"ATestSuite/aTestMethod,BTestSuite/bTestMethod"];
+  [state addTestsFromArray:@[@"ATestSuite/aTestMethod", @"BTestSuite/bTestMethod"]];
 
   NSArray *tests = [state tests];
   assertThat(tests, hasCountOf(2));

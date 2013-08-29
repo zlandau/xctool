@@ -32,7 +32,7 @@
 - (void)endTestSuite;
 - (double)duration;
 - (void)addTest:(OCTestEventState *)test;
-- (void)addTestsFromString:(NSString *)tests;
+- (void)addTestsFromArray:(NSArray *)tests;
 - (OCTestEventState *)runningTest;
 - (OCTestEventState *)getTestWithTestName:(NSString *)name;
 - (unsigned int)testCount;

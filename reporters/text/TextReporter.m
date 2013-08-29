@@ -383,6 +383,7 @@ static NSString *abbreviatePath(NSString *string) {
         if ([exceptions count] > 0) {
           NSDictionary *exception = exceptions[0];
           int lineNumber = [exception[kReporter_EndTest_Exception_LineNumberKey] intValue];
+          NSString *filePath = exception[kReporter_EndTest_Exception_FilePathInProjectKey];
 
           [self.reportWriter disableIndent];
 
@@ -710,6 +711,7 @@ static NSString *abbreviatePath(NSString *string) {
     if ([exceptions count] > 0) {
       NSDictionary *exception = exceptions[0];
       int lineNumber = [exception[kReporter_EndTest_Exception_LineNumberKey] intValue];
+      NSString *filePath = exception[kReporter_EndTest_Exception_FilePathInProjectKey];
 
       [self.reportWriter printLine:@"<faint>%@:%d: %@: %@:<reset>",
        filePath,

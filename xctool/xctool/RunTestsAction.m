@@ -391,7 +391,7 @@ typedef BOOL (^TestableBlock)(NSArray *reporters);
 }
 
 - (TestableBlock)blockForTestable:(Testable *)testable
-                      senTestList:(NSString *)senTestList
+                      senTestList:(NSArray *)senTestList
             testableBuildSettings:(NSDictionary *)testableBuildSettings
                    testableTarget:(NSString *)testableTarget
                 isApplicationTest:(BOOL)isApplicationTest
@@ -481,17 +481,13 @@ typedef BOOL (^TestableBlock)(NSArray *reporters);
     NSArray *testConfigurations = [self testConfigurationsForBuildSettings:info.buildSettings];
     BOOL isApplicationTest = info.buildSettings[@"TEST_HOST"] != nil;
 
-    NSArray *testCases = [OCUnitTestRunner filterTestCases:info.testCases
-                                           withSenTestList:info.testable.senTestList
-                                        senTestInvertScope:info.testable.senTestInvertScope];
-
     int bucketSize = isApplicationTest ? _appTestBucketSize : _logicTestBucketSize;
     NSArray *testChunks;
 
     if (_bucketBy == BucketByClass) {
-      testChunks = BucketizeTestCasesByTestClass(testCases, bucketSize > 0 ? bucketSize : INT_MAX);
+      testChunks = BucketizeTestCasesByTestClass(info.testCases, bucketSize > 0 ? bucketSize : INT_MAX);
     } else if (_bucketBy == BucketByTestCase) {
-      testChunks = BucketizeTestCasesByTestCase(testCases, bucketSize > 0 ? bucketSize : INT_MAX);
+      testChunks = BucketizeTestCasesByTestCase(info.testCases, bucketSize > 0 ? bucketSize : INT_MAX);
     } else {
       NSAssert(NO, @"Unexpected value for _bucketBy: %d", _bucketBy);
     }
@@ -501,7 +497,6 @@ typedef BOOL (^TestableBlock)(NSArray *reporters);
       BOOL garbageCollectionEnabled = [testConfiguration[1] boolValue];
 
       for (NSArray *senTestListChunk in testChunks) {
-
         TestableBlock block;
 
         if (info.testCasesQueryError != nil) {
@@ -510,11 +505,8 @@ typedef BOOL (^TestableBlock)(NSArray *reporters);
                      forTestableExecutionInfo:info
                                     gcEnabled:garbageCollectionEnabled];
         } else {
-          NSString *senTestListString = [OCUnitTestRunner reduceSenTestListToBroadestForm:senTestListChunk
-                                                                             allTestCases:info.testCases];
-
           block = [self blockForTestable:info.testable
-                             senTestList:senTestListString
+                             senTestList:senTestListChunk
                    testableBuildSettings:info.buildSettings
                           testableTarget:info.testable.target
                        isApplicationTest:isApplicationTest
