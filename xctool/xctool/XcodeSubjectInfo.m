@@ -666,17 +666,16 @@ containsFilesModifiedSince:(NSDate *)sinceDate
       [testsToSkip addObject:test];
     }
 
-    /*NSString *senTestList = nil;
+    NSString *senTestList = nil;
     BOOL senTestInvertScope = NO;
     if (testsToSkip.count > 0) {
       senTestList = [testsToSkip componentsJoinedByString:@","];
       senTestInvertScope = YES;
-    } else {
+    } /*else {
       senTestList = @"All";
       senTestInvertScope = NO;
     }*/
-    NSArray *senTestList = @[];
-    BOOL senTestInvertScope = NO;
+
 
     Testable *testable = [[[Testable alloc] init] autorelease];
     testable.projectPath = projectPath;

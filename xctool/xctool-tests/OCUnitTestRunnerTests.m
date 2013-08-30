@@ -300,4 +300,45 @@
   }];
 }
 
+#pragma mark misc.
+
+/// otest-query returns a list of all classes. This tests the post-filtering of
+/// that list to only contain specified tests.
+- (void)testClassNameDiscoveryFiltering
+{
+  NSArray *testCases = @[
+                         @"Cls1/test1",
+                         @"Cls1/test2",
+                         @"Cls1/test3",
+                         @"Cls2/test1",
+                         @"Cls2/test2",
+                         @"Cls3/test1",
+                         ];
+
+  assertThat([OCUnitTestRunner filterTestCases:testCases withSenTestList:@"Cls1" senTestInvertScope:NO],
+             equalTo(@[
+                     @"Cls1/test1",
+                     @"Cls1/test2",
+                     @"Cls1/test3",
+                     ]));
+  assertThat([OCUnitTestRunner filterTestCases:testCases withSenTestList:@"Cls1" senTestInvertScope:YES],
+             equalTo(@[
+                     @"Cls2/test1",
+                     @"Cls2/test2",
+                     @"Cls3/test1",
+                     ]));
+  assertThat([OCUnitTestRunner filterTestCases:testCases withSenTestList:@"Cls1,Cls2/test1,Cls3" senTestInvertScope:NO],
+             equalTo(@[
+                     @"Cls1/test1",
+                     @"Cls1/test2",
+                     @"Cls1/test3",
+                     @"Cls2/test1",
+                     @"Cls3/test1"
+                     ]));
+  assertThat([OCUnitTestRunner filterTestCases:testCases withSenTestList:@"Cls1,Cls2/test1,Cls3" senTestInvertScope:YES],
+             equalTo(@[
+                     @"Cls2/test2",
+                     ]));
+}
+
 @end

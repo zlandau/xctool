@@ -20,7 +20,7 @@
 
 @interface Testable : Buildable <NSCopying>
 
-@property (nonatomic, retain) NSArray *senTestList;
+@property (nonatomic, retain) NSString *senTestList;
 @property (nonatomic, assign) BOOL senTestInvertScope;
 
 /**

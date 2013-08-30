@@ -33,6 +33,18 @@
   OCTestEventState *_previousTestState;
 }
 
+/**
+ * Filters a list of test class names to only those that match the
+ * senTestList and senTestInvertScope constraints.
+ *
+ * @param testCases An array of test cases ('ClassA/test1', 'ClassB/test2')
+ * @param senTestList SenTestList string.  e.g. "All", "None", "ClsA,ClsB"
+ * @param senTestInvertScope YES if scope should be inverted.
+ */
++ (NSArray *)filterTestCases:(NSArray *)testCases
+             withSenTestList:(NSString *)senTestList
+          senTestInvertScope:(BOOL)senTestInvertScope;
+
 - (id)initWithBuildSettings:(NSDictionary *)buildSettings
                 senTestList:(NSArray *)senTestList
                   arguments:(NSArray *)arguments

@@ -55,6 +55,7 @@
 
   NSData *json = [NSJSONSerialization dataWithJSONObject:testNames options:0 error:nil];
   [(NSFileHandle *)[NSFileHandle fileHandleWithStandardOutput] writeData:json];
+  NSLog(@"otest-query data: %@", json);
   exit(0);
 }
 

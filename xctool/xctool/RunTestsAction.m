@@ -481,13 +481,17 @@ typedef BOOL (^TestableBlock)(NSArray *reporters);
     NSArray *testConfigurations = [self testConfigurationsForBuildSettings:info.buildSettings];
     BOOL isApplicationTest = info.buildSettings[@"TEST_HOST"] != nil;
 
+    NSArray *testCases = [OCUnitTestRunner filterTestCases:info.testCases
+                                           withSenTestList:info.testable.senTestList
+                                        senTestInvertScope:info.testable.senTestInvertScope];
+    
     int bucketSize = isApplicationTest ? _appTestBucketSize : _logicTestBucketSize;
     NSArray *testChunks;
 
     if (_bucketBy == BucketByClass) {
-      testChunks = BucketizeTestCasesByTestClass(info.testCases, bucketSize > 0 ? bucketSize : INT_MAX);
+      testChunks = BucketizeTestCasesByTestClass(testCases, bucketSize > 0 ? bucketSize : INT_MAX);
     } else if (_bucketBy == BucketByTestCase) {
-      testChunks = BucketizeTestCasesByTestCase(info.testCases, bucketSize > 0 ? bucketSize : INT_MAX);
+      testChunks = BucketizeTestCasesByTestCase(testCases, bucketSize > 0 ? bucketSize : INT_MAX);
     } else {
       NSAssert(NO, @"Unexpected value for _bucketBy: %d", _bucketBy);
     }
