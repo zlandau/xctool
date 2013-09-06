@@ -18,6 +18,10 @@
 		2828294216B11F0F00426B92 /* SomeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2828294116B11F0F00426B92 /* SomeTests.m */; };
 		28A33D1316CF4FFD00C5EE2A /* OtherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 28A33D1216CF4FFD00C5EE2A /* OtherTests.m */; };
 		28B3C3AF1731B33C00EC75E5 /* DisabledTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 28B3C3AE1731B33C00EC75E5 /* DisabledTests.m */; };
+		EED25B3C17D15568005C9CF8 /* TestProject_Library.m in Sources */ = {isa = PBXBuildFile; fileRef = 2828292A16B11F0F00426B92 /* TestProject_Library.m */; };
+		EED25B3E17D15568005C9CF8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2828292316B11F0F00426B92 /* Foundation.framework */; };
+		EED25B4017D15568005C9CF8 /* TestProject_Library.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2828292816B11F0F00426B92 /* TestProject_Library.h */; };
+		EED25B4717D1559D005C9CF8 /* BrokenClass.m in Sources */ = {isa = PBXBuildFile; fileRef = EED25B4617D1559D005C9CF8 /* BrokenClass.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +32,16 @@
 			dstSubfolderSpec = 16;
 			files = (
 				2828292916B11F0F00426B92 /* TestProject_Library.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EED25B3F17D15568005C9CF8 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/${PRODUCT_NAME}";
+			dstSubfolderSpec = 16;
+			files = (
+				EED25B4017D15568005C9CF8 /* TestProject_Library.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,6 +64,9 @@
 		28A33D1216CF4FFD00C5EE2A /* OtherTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OtherTests.m; sourceTree = "<group>"; };
 		28B3C3AD1731B33C00EC75E5 /* DisabledTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DisabledTests.h; sourceTree = "<group>"; };
 		28B3C3AE1731B33C00EC75E5 /* DisabledTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DisabledTests.m; sourceTree = "<group>"; };
+		EED25B4417D15568005C9CF8 /* libTestProject-Library copy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libTestProject-Library copy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EED25B4517D1559D005C9CF8 /* BrokenClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrokenClass.h; sourceTree = "<group>"; };
+		EED25B4617D1559D005C9CF8 /* BrokenClass.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BrokenClass.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +89,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EED25B3D17D15568005C9CF8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EED25B3E17D15568005C9CF8 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,6 +115,7 @@
 			children = (
 				2828292016B11F0F00426B92 /* libTestProject-Library.a */,
 				2828293116B11F0F00426B92 /* TestProject-LibraryTests.octest */,
+				EED25B4417D15568005C9CF8 /* libTestProject-Library copy.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -110,6 +136,8 @@
 				2828292816B11F0F00426B92 /* TestProject_Library.h */,
 				2828292A16B11F0F00426B92 /* TestProject_Library.m */,
 				2828292616B11F0F00426B92 /* Supporting Files */,
+				EED25B4517D1559D005C9CF8 /* BrokenClass.h */,
+				EED25B4617D1559D005C9CF8 /* BrokenClass.m */,
 			);
 			path = "TestProject-Library";
 			sourceTree = "<group>";
@@ -183,6 +211,23 @@
 			productReference = 2828293116B11F0F00426B92 /* TestProject-LibraryTests.octest */;
 			productType = "com.apple.product-type.bundle";
 		};
+		EED25B3A17D15568005C9CF8 /* TestProject-Library - Failure */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EED25B4117D15568005C9CF8 /* Build configuration list for PBXNativeTarget "TestProject-Library - Failure" */;
+			buildPhases = (
+				EED25B3B17D15568005C9CF8 /* Sources */,
+				EED25B3D17D15568005C9CF8 /* Frameworks */,
+				EED25B3F17D15568005C9CF8 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "TestProject-Library - Failure";
+			productName = "TestProject-Library";
+			productReference = EED25B4417D15568005C9CF8 /* libTestProject-Library copy.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,6 +250,7 @@
 			targets = (
 				2828291F16B11F0F00426B92 /* TestProject-Library */,
 				2828293016B11F0F00426B92 /* TestProject-LibraryTests */,
+				EED25B3A17D15568005C9CF8 /* TestProject-Library - Failure */,
 			);
 		};
 /* End PBXProject section */
@@ -252,6 +298,15 @@
 				2828294216B11F0F00426B92 /* SomeTests.m in Sources */,
 				28A33D1316CF4FFD00C5EE2A /* OtherTests.m in Sources */,
 				28B3C3AF1731B33C00EC75E5 /* DisabledTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EED25B3B17D15568005C9CF8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EED25B3C17D15568005C9CF8 /* TestProject_Library.m in Sources */,
+				EED25B4717D1559D005C9CF8 /* BrokenClass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -365,6 +420,28 @@
 			};
 			name = Release;
 		};
+		EED25B4217D15568005C9CF8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/TestProject_Library.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "TestProject-Library/TestProject-Library-Prefix.pch";
+				PRODUCT_NAME = "TestProject-Library copy";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		EED25B4317D15568005C9CF8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DSTROOT = /tmp/TestProject_Library.dst;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "TestProject-Library/TestProject-Library-Prefix.pch";
+				PRODUCT_NAME = "TestProject-Library copy";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -391,6 +468,15 @@
 			buildConfigurations = (
 				2828294916B11F0F00426B92 /* Debug */,
 				2828294A16B11F0F00426B92 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EED25B4117D15568005C9CF8 /* Build configuration list for PBXNativeTarget "TestProject-Library - Failure" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EED25B4217D15568005C9CF8 /* Debug */,
+				EED25B4317D15568005C9CF8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
